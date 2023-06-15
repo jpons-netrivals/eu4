@@ -21,6 +21,7 @@ class CreateShipsTable extends Migration
             $table->integer('SolarSystemY')->unsigned()->nullable();
             $table->integer('GalaxyX')->unsigned()->nullable();
             $table->integer('GalaxyY')->unsigned()->nullable();
+            $table->json('config')->nullable();
             $table->timestamps();
         });
     }

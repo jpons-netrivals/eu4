@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Asteroid;
+use App\Models\Component;
 use App\Models\Factory;
 use App\Models\Galaxy;
 use App\Models\SolarSystem;
@@ -51,17 +53,18 @@ class DatabaseSeeder extends Seeder
         $this->createResourcesTypes();
         echo 'Resources types created' . PHP_EOL;
         $this->setResourcesPercentagesToEachPlanet();
-
-        $shipType = ShipsType::create([
-            'Name' => 'Sonda',
-            'NormalSpeed' => 10,
-            'WrapSpeed' => 10,
-        ]);
+        echo 'Resources added to the planets' . PHP_EOL;
+        $this->createShipTypes();
+        echo 'Ship types created' . PHP_EOL;
+        $this->createComponents();
+        echo 'Components created' . PHP_EOL;
+        $this->createAsteroids();
+        echo 'Asteroids created' . PHP_EOL;
 
         // add 2 sondas to the first user
         Ship::create([
             'UserID' => 1,
-            'ShipTypeID' => $shipType->id,
+            'ShipTypeID' => 1,
             'SolarSystemX' => rand(0, 60),
             'SolarSystemY' => rand(0, 60),
             'GalaxyX' => 0,
@@ -69,11 +72,14 @@ class DatabaseSeeder extends Seeder
         ]);
         Ship::create([
             'UserID' => 1,
-            'ShipTypeID' => $shipType->id,
-            'SolarSystemX' => rand(0, 60),
-            'SolarSystemY' => rand(0, 60),
-            'GalaxyX' => rand(0, $this->boardSize),
-            'GalaxyY' => rand(0, $this->boardSize),
+            'ShipTypeID' => 3,
+            'SolarSystemX' => 10,
+            'SolarSystemY' => 10,
+            'GalaxyX' => 0,
+            'GalaxyY' => 0,
+            'config' => [
+                "Components" => [0, 1, 3, 3, 5  ],
+            ]
         ]);
 
         // assign first planet to first user
@@ -196,5 +202,164 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+    }
+
+    public function createShipTypes()
+    {
+        $shipTypes = [
+            [
+                'Name' => 'Sonda',
+                'NormalSpeed' => 10,
+                'WrapSpeed' => 10,
+                'Costs' => json_encode([
+                    'titanium' => 100,
+                ]),
+                'TimeToBuild' => 5,
+                'Cells' => 1
+            ],
+            [
+                'Name' => 'Corvete',
+                'NormalSpeed' => 10,
+                'WrapSpeed' => 5,
+                'Costs' => json_encode([
+                    'titanium' => 1000,
+                    'copper' => 1500,
+                    'iron' => 500,
+                ]),
+                'TimeToBuild' => 10,
+                'Cells' => 20
+            ],
+            [
+                'Name' => 'Nave de carga',
+                'NormalSpeed' => 10,
+                'WrapSpeed' => 4,
+                'Costs' => json_encode([
+                    'titanium' => 1000,
+                    'copper' => 1500,
+                    'aluminium' => 800,
+                ]),
+                'TimeToBuild' => 15,
+                'Cells' => 30
+            ],
+            [
+                'Name' => 'Cruise',
+                'NormalSpeed' => 7,
+                'WrapSpeed' => 2,
+                'Costs' => json_encode([
+                    'titanium' => 4000,
+                    'copper' => 3000,
+                    'aluminium' => 1500,
+                    'uranium' => 1000,
+                    'silicon' => 500,
+                ]),
+                'TimeToBuild' => 20,
+                'Cells' => 50
+            ],
+        ];
+        foreach ($shipTypes as $shipType) {
+            ShipsType::create($shipType);
+        }
+    }
+
+    public function createComponents()
+    {
+        $components = [
+            [
+                'Name' => 'Fly Engine 1',
+                'Costs' => ([
+                    'titanium' => 1000,
+                    'copper' => 500,
+                    'iron' => 500,
+                ]),
+                'TimeToBuild' => 10,
+                'CellsRequired' => 5,
+                'Features' => ([
+                    'NormalSpeed' => 2,
+                ]),
+            ],
+            [
+                'Name' => 'Fly Engine 2',
+                'Costs' => ([
+                    'titanium' => 2000,
+                    'copper' => 1000,
+                    'iron' => 1000,
+                ]),
+                'TimeToBuild' => 20,
+                'CellsRequired' => 10,
+                'Features' => ([
+                    'NormalSpeed' => 4,
+                ]),
+            ],
+            [
+                'Name' => 'Wrap Engine 1',
+                'Costs' => ([
+                    'titanium' => 2000,
+                    'copper' => 1000,
+                    'iron' => 1000,
+                ]),
+                'TimeToBuild' => 20,
+                'CellsRequired' => 10,
+                'Features' => ([
+                    'WrapSpeed' => 4,
+                ]),
+            ],
+            [
+                'Name' => 'Wrap Engine 2',
+                'Costs' => ([
+                    'titanium' => 4000,
+                    'copper' => 2000,
+                    'iron' => 2000,
+                ]),
+                'TimeToBuild' => 25,
+                'CellsRequired' => 20,
+                'Features' => ([
+                    'WrapSpeed' => 8,
+                ]),
+            ],
+            [
+                'Name' => 'Asteroid Miner Engine 1',
+                'Costs' => ([
+                    'titanium' => 4000,
+                    'copper' => 2000,
+                    'iron' => 2000,
+                ]),
+                'TimeToBuild' => 1,
+                'CellsRequired' => 5,
+                'Features' => ([
+                    'AsteroidMining' => 500,
+                    'ResourcesCapacity' => 1000,
+                ]),
+            ],
+            [
+                'Name' => 'Cargo 1',
+                'Costs' => ([
+                    'titanium' => 4000,
+                    'copper' => 2000,
+                    'iron' => 2000,
+                ]),
+                'TimeToBuild' => 1,
+                'CellsRequired' => 5,
+                'Features' => ([
+                    'ResourcesCapacity' => 20000,
+                ]),
+            ],
+        ];
+
+        foreach ($components as $component) {
+            Component::create($component);
+        }
+    }
+
+    public function createAsteroids()
+    {
+        Asteroid::create([
+            'SolarSystemID' => 2,
+            'x' => 10,
+            'y' => 10,
+            'config' => [
+                'nitrogen' => 1000,
+                'hydrogen' => 1000,
+            ]
+        ]);
     }
 }

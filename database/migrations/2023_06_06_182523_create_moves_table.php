@@ -27,6 +27,9 @@ CreateMovesTable extends Migration
             $table->integer('SolarSystemY')->unsigned()->nullable();
             $table->integer('GalaxyX')->unsigned()->nullable();
             $table->integer('GalaxyY')->unsigned()->nullable();
+            $table->integer('SSX')->unsigned()->nullable();
+            $table->integer('SSY')->unsigned()->nullable();
+            $table->json('config')->nullable();
             $table->timestamps();
         });
     }

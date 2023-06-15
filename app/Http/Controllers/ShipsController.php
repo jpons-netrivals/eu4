@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asteroid;
+use App\Models\Component;
 use App\Models\Move;
 use App\Models\Ship;
 use App\Models\SolarSystem;
@@ -32,28 +34,106 @@ class ShipsController extends Controller
         ]);
     }
 
-    public function moveToSS(Ship $ship, $to_x, $to_y)
+    public function moveToSS(Ship $ship, Request $request)
     {
-        $minJumps = $this->findMinimumJumps([$ship->GalaxyX, $ship->GalaxyY], [$to_x, $to_y], 10);
-        $timeForEachSS = 10; // minutes
-        $current_timestamp = Carbon::now()->toDateTimeString(); // Produces something like 1552296328
-
-
-        $timeOfTravel = ($minJumps * $timeForEachSS) / $ship->type->WrapSpeed;
-        $later = Carbon::now()->addMinutes($timeOfTravel)->toDateTimeString();
         Move::create([
             'UserID' => 1, // todo: refactor this
             'ShipID' => $ship->id,
-            'started_at' => $current_timestamp,
-            'will_be_finished_at' => $later,
-            'GalaxyX' => $to_x,
-            'GalaxyY' => $to_y,
+            'started_at' => Carbon::now()->toDateTimeString(),
+            'will_be_finished_at' => $this->timeForAction($ship, $request),
+            'GalaxyX' => $request->GalaxyX,
+            'GalaxyY' => $request->GalaxyY,
+            'SSX' => 10,
+            'SSY' => 10,
+            'config' => [
+                'type' => 'move',
+            ]
         ]);
+    }
+
+    public function sumSameComponentFeaturesOfShip(Ship $ship, $componentFeatureName)
+    {
+
+        $shipComponentsIDs = $ship->config['Components'];
+        $components = Component::whereIn('id', $shipComponentsIDs)->get();
+        $enginesSpeed = [];
+        foreach ($components as $component) {
+            if (array_key_exists($componentFeatureName, $component['Features'])) {
+                $enginesSpeed[$component->id] = $component['Features'][$componentFeatureName];
+            }
+        }
+        $shipComponentsSpeed = 0;
+
+        foreach ($shipComponentsIDs as $shipComponentsID) {
+            if (array_key_exists($shipComponentsID, $enginesSpeed)) {
+                $shipComponentsSpeed += $enginesSpeed[$shipComponentsID];
+            }
+        }
+
+        return $shipComponentsSpeed;
+
+    }
+
+    public function timeForAction(Ship $ship, Request $request)
+    {
+        $minJumps = $this->findMinimumJumps([$ship->GalaxyX, $ship->GalaxyY], [$request->GalaxyX, $request->GalaxyY], 10);
+        $timeForEachSS = 40; // minutes
+        $current_timestamp = Carbon::now()->toDateTimeString(); // Produces something like 1552296328
+
+
+        $wrapSpeed = $this->sumSameComponentFeaturesOfShip($ship, 'WrapSpeed');
+
+        $timeOfTravel = ($minJumps * $timeForEachSS) / ($ship->type->WrapSpeed + $wrapSpeed);
+        $later = Carbon::now()->addMinutes($timeOfTravel)->toDateTimeString();
+        return $later;
     }
 
     public function canShipMove(Ship $ship)
     {
         return Carbon::now()->diffInSeconds($ship->moves->first()->will_be_finished_at, false) < 0;
+    }
+
+    public function isOnAsteroid(Ship $ship)
+    {
+        return Asteroid::where('asteroids.x', $ship->SolarSystemX)->where('asteroids.y', $ship->SolarSystemY)
+            ->join('solar_systems', 'asteroids.SolarSystemID', '=', 'solar_systems.id')
+            ->where('solar_systems.x', $ship->GalaxyX)
+            ->where('solar_systems.y', $ship->GalaxyY)->count() == 1;
+    }
+
+    public function doMining(Ship $ship)
+    {
+        if (!$this->isOnAsteroid($ship)) {
+            return 'You are not on an asteroid';
+        }
+        $asteroid = Asteroid::where('asteroids.x', $ship->SolarSystemX)->where('asteroids.y', $ship->SolarSystemY)
+            ->join('solar_systems', 'asteroids.SolarSystemID', '=', 'solar_systems.id')
+            ->where('solar_systems.x', $ship->GalaxyX)
+            ->where('solar_systems.y', $ship->GalaxyY)->first();
+
+
+        $shipMiningSpeed = $this->sumSameComponentFeaturesOfShip($ship, 'AsteroidMining');
+
+        $asteroidSize = array_sum($asteroid->config);
+
+        $miningTime = $asteroidSize / $shipMiningSpeed;
+//        return Carbon::now()->addMinutes($miningTime)->toDateTimeString();
+//        $this->sumSameComponentFeaturesOfShip($ship, 'ResourcesCapacity')/
+        ;
+
+        Move::create([
+            'UserID' => 1, // todo: refactor this
+            'ShipID' => $ship->id,
+            'started_at' => Carbon::now()->toDateTimeString(),
+            'will_be_finished_at' => Carbon::now()->addMinutes($miningTime)->toDateTimeString(),
+            'GalaxyX' => $ship->GalaxyX,
+            'GalaxyY' => $ship->GalaxyY,
+            'SSX' => 10,
+            'SSY' => 10,
+            'config' => [
+                'type' => 'asteroid_mining',
+            ]
+        ]);
     }
 
     public function getSSVisible(User $user)

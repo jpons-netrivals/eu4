@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateShipsTypesTable extends Migration
+class CreateAsteroidsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,12 @@ class CreateShipsTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('ships_types', function (Blueprint $table) {
+        Schema::create('asteroids', function (Blueprint $table) {
             $table->id();
-            $table->string('Name');
-            $table->float('NormalSpeed');
-            $table->float('WrapSpeed');
-            $table->json('Costs');
-            $table->integer('TimeToBuild');
-            $table->integer('Cells');
+            $table->integer('SolarSystemID')->unsigned();
+            $table->integer('x');
+            $table->integer('y');
+            $table->json('config');
             $table->timestamps();
         });
     }
@@ -32,6 +30,6 @@ class CreateShipsTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('ships_types');
+        Schema::dropIfExists('asteroids');
     }
 }

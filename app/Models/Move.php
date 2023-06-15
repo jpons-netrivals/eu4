@@ -9,8 +9,11 @@ class Move extends Model
 {
     use HasFactory;
 
-    public $timestamps = false;
-    protected $fillable = ['UserID', 'ShipID', 'started_at', 'will_be_finished_at', 'has_arrived', 'GalaxyX', 'GalaxyY', 'SolarSystemX', 'SolarSystemY'];
+
+    protected $casts = [
+        'config' => 'array',
+    ];
+    protected $fillable = ['UserID', 'ShipID', 'started_at', 'will_be_finished_at', 'has_arrived', 'GalaxyX', 'GalaxyY', 'SolarSystemX', 'SolarSystemY', 'config'];
 
 
     public function user()

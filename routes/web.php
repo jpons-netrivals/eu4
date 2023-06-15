@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ShipsController;
+use App\Models\Asteroid;
 use Illuminate\Support\Facades\Route;
 use SebastianBergmann\CodeCoverage\Report\PHP;
 
@@ -25,9 +26,11 @@ Route::get('/', function () {
 
 Route::get('/ship/find/of/{user}', [ShipsController::class, 'index']);
 Route::get('/ship/move/to/ss/{ship}/{to_x}:{to_y}', [ShipsController::class, 'moveToSS']);
+Route::get('/ship/time/for/movement/{ship}', [ShipsController::class, 'timeForAction']);
 Route::get('/ship/can/move/{ship}', [ShipsController::class, 'canShipMove']);
 Route::get('/ship/get/ss/visible/{user}', [ShipsController::class, 'getSSVisible']);
-
+Route::get('/ship/is/on/asteroid/{ship}', [ShipsController::class, 'isOnAsteroid']);
+Route::get('/ship/mine/{ship}', [ShipsController::class, 'doMining']);
 
 # Planet routes
 Route::get('/planet/show/base/{planet}', [\App\Http\Controllers\PlanetController::class, 'showBase']);
@@ -38,3 +41,19 @@ Route::get('/planet/add/resources/{planet}', [\App\Http\Controllers\PlanetContro
 
 # Solar System routes
 Route::get('/galaxy/get/visible/ss/{user}', [\App\Http\Controllers\SolarSystemController::class, 'getVisibleSS']);
+
+# Ship Builder routes
+Route::get('/build/ship/{user}/{planet}', [\App\Http\Controllers\ShipBuilderController::class, 'buildShip']);
+
+
+# Testing routes
+
+Route::get('/test/{ship}', function(\App\Models\Ship $ship){
+    $asteroid = Asteroid::where('asteroids.x', $ship->SolarSystemX)->where('asteroids.y', $ship->SolarSystemY)
+        ->join('solar_systems', 'asteroids.SolarSystemID', '=', 'solar_systems.id')
+        ->where('solar_systems.x', $ship->GalaxyX)
+        ->where('solar_systems.y', $ship->GalaxyY)->get();
+
+    dd(DB::getQueryLog());
+    return $asteroid;
+});
